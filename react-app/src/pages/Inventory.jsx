@@ -11,16 +11,11 @@ import {
     ArrowLeft, 
     X,
     Filter,
-    ChevronRight
     ChevronRight,
     Edit2,
     ChevronDown,
     Folder,
     ChevronUp
-=======
-    ChevronRight,
-    Edit2
->>>>>>> main
 } from 'lucide-react';
 
 export default function Inventory() {
@@ -29,8 +24,6 @@ export default function Inventory() {
     const { docs: categories, loading: categoriesLoading, addDocument: addCategory, updateDocument: updateCategory, deleteDocument: deleteCategory } = useFirestore('categories');
     const { isMobile } = useDevice();
 
-    // Tab State
-    const [activeTab, setActiveTab] = useState('products'); // 'products' or 'categories'
 
     // Category Form State
     const [catForm, setCatForm] = useState({ id: null, name: '', icon: '🧇', status: 'active' });
@@ -143,37 +136,6 @@ export default function Inventory() {
         setNewCategoryIcon('🍛');
     };
 
-=======
-    // Edit Product State
-    const [editingProductId, setEditingProductId] = useState(null);
-
-    const startEdit = (item) => {
-        setEditingProductId(item.id);
-        setNewProduct({
-            name: item.name || '',
-            cat: item.cat || 'rice',
-            type: item.type || 'veg',
-            price: item.price !== undefined ? String(item.price) : '',
-            cost: item.cost !== undefined ? String(item.cost) : '',
-            stock: item.stock !== undefined ? String(item.stock) : '',
-            unit: item.unit || 'plate',
-            low: item.low !== undefined ? String(item.low) : '5',
-            desc: item.desc || '',
-            img: item.img || ''
-        });
-        if (isMobile) {
-            setShowAddModal(true);
-        }
-    };
-
-    const clearForm = () => {
-        setEditingProductId(null);
-        setNewProduct({
-            name: '', cat: 'rice', type: 'veg', price: '', cost: '', stock: '', unit: 'plate', low: 5, desc: '', img: ''
-        });
-    };
-
->>>>>>> main
     const userRole = (sessionStorage.getItem('fb_user_role') || '').toLowerCase();
     const userBranch = sessionStorage.getItem('fb_user_station') || 'Main Branch';
     const userBranchId = sessionStorage.getItem('fb_user_branch_id') || 'main';
@@ -719,15 +681,6 @@ export default function Inventory() {
             cat: finalCatName.toLowerCase(),
             categoryId: finalCategoryId,
             subcategoryId: isCreatingNewCategory ? '' : (newProduct.subcategoryId || ''),
-    const handleUpdateProduct = async () => {
-        if (!newProduct.name || !newProduct.price || newProduct.stock === '') {
-            showToast('Please fill required fields: Name, Sell Price, Stock Qty', 'error');
-            return;
-        }
-
-        const product = {
-            name: newProduct.name,
-            cat: newProduct.cat,
             type: newProduct.type,
             price: parseFloat(newProduct.price) || 0,
             cost: parseFloat(newProduct.cost) || 0,
@@ -735,7 +688,9 @@ export default function Inventory() {
             unit: newProduct.unit,
             low: parseInt(newProduct.low, 10) || 5,
             desc: newProduct.desc,
-            img: newProduct.img || ''
+            img: newProduct.img || '',
+            branch: userBranch,
+            branch_id: userBranchId
         };
 
         try {
@@ -747,7 +702,6 @@ export default function Inventory() {
             showToast('Error updating product: ' + error.message, 'error');
         }
     };
-
 
     const handleDeleteProduct = (id) => {
         showConfirm({
@@ -1109,58 +1063,7 @@ export default function Inventory() {
 
     return (
         <div className="page active" id="page-inventory">
-            {/* Material 3 Tab Bar */}
-            <div style={{ 
-                display: 'flex', 
-                gap: '1rem', 
-                borderBottom: '1px solid var(--border)', 
-                marginBottom: '1rem',
-                paddingBottom: '2px',
-                marginTop: isMobile ? '1.2cm' : '0.5cm'
-            }}>
-                {!isMobile && (
-                    <div className="inv-add-panel">
-                        <div style={{ fontFamily: "'Yeseva One', serif", fontSize: '1.15rem', marginBottom: '1.2rem', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-                            {editingProductId ? '📝 Edit Product' : '＋ Add Product'}
-                        </div>
-                        {ProductForm()}
-                    </div>
-                )}
-                <button 
-                    onClick={() => setActiveTab('products')}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        borderBottom: activeTab === 'products' ? '3px solid var(--accent)' : '3px solid transparent',
-                        color: activeTab === 'products' ? 'var(--accent)' : 'var(--muted)',
-                        padding: '0.8rem 1.2rem',
-                        fontSize: '0.95rem',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s'
-                    }}
-                >
-                    📦 Products
-                </button>
-                <button 
-                    onClick={() => setActiveTab('categories')}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        borderBottom: activeTab === 'categories' ? '3px solid var(--accent)' : '3px solid transparent',
-                        color: activeTab === 'categories' ? 'var(--accent)' : 'var(--muted)',
-                        padding: '0.8rem 1.2rem',
-                        fontSize: '0.95rem',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s'
-                    }}
-                >
-                    📁 Categories & Tree
-                </button>
-            </div>
-
-            {activeTab === 'products' ? (
+            {/* Products View */}
                 <div className="inv-layout-2" style={{ 
                     display: (isMobile && showAddModal) ? 'none' : 'flex',
                     flexDirection: isMobile ? 'column' : 'row', 
@@ -1186,56 +1089,6 @@ export default function Inventory() {
                                 style={{ background: 'var(--panel)', border: '1.5px solid var(--border)', color: 'var(--ink)', padding: '.5rem .9rem', borderRadius: '100px', fontFamily: "'Nunito', sans-serif", fontSize: '.82rem', flex: 1, minWidth: '150px', outline: 'none' }}
                             />
 
-                                        return (
-                                            <div key={m.id} className="inv-card-mobile" style={{ 
-                                                background: 'white', 
-                                                borderRadius: '16px', 
-                                                padding: '1rem', 
-                                                border: '1px solid var(--border)',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                gap: '0.75rem'
-                                            }}>
-                                                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                                                    {m.img ? (
-                                                        <img src={m.img} alt={m.name} style={{ width: '44px', height: '44px', borderRadius: '10px', objectFit: 'cover' }} />
-                                                    ) : (
-                                                        <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: 'var(--panel)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
-                                                            {m.type === 'veg' ? '🟢' : '🔴'}
-                                                        </div>
-                                                    )}
-                                                    <div style={{ flex: 1 }}>
-                                                        <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--ink)' }}>{m.name}</div>
-                                                        <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--muted)', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>{m.cat}</span>
-                                                    </div>
-                                                    <div style={{ display: 'flex', gap: '4px' }}>
-                                                        <button className="btn btn-ghost" onClick={() => startEdit(m)} style={{ padding: '8px', borderRadius: '10px', height: '40px', width: '40px', color: 'var(--accent)', border: '1px solid var(--border)' }}>
-                                                            <Edit2 size={16} />
-                                                        </button>
-                                                        <button className="btn-vibe-danger" onClick={() => handleDeleteProduct(m.id)} style={{ padding: '8px', borderRadius: '10px', height: '40px', width: '40px' }}>
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '8px 12px', borderRadius: '12px' }}>
-                                                    <div style={{ fontWeight: 700 }}>₹{m.price}</div>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                        <span style={{ fontWeight: 800, color: m.stock <= m.low ? 'var(--red)' : '#0f172a' }}>{m.stock} <small style={{ fontWeight: 400, opacity: 0.6 }}>{m.unit}</small></span>
-                                                        <div style={{ display: 'flex', gap: '4px' }}>
-                                                            <button className="stepper-btn" onClick={() => quickStockAdjust(m.id, -1)} style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'white' }}><Minus size={14} /></button>
-                                                            <button className="stepper-btn" onClick={() => quickStockAdjust(m.id, 1)} style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'white' }}><Plus size={14} /></button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <span className={`status-badge ${statusObj.cls}`} style={{ fontSize: '0.75rem' }}>{statusObj.txt}</span>
-                                                    <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>Alert at: {m.low}</span>
-                                                </div>
-                                            </div>
-                                        );
-                                    })
                             <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap' }}>
                                 <button className={`btn btn-ghost btn-sm ${filterStatus === 'all' ? 'active' : ''}`} onClick={() => setFilterStatus('all')}>All</button>
                                 <button className={`btn btn-ghost btn-sm ${filterStatus === 'in' ? 'active' : ''}`} onClick={() => setFilterStatus('in')}>✅ In</button>
@@ -1337,27 +1190,10 @@ export default function Inventory() {
                                                                 );
                                                             })()}
                                                         </div>
-                                                    </td>
-                                                    <td data-label="Status"><span className={`status-badge ${statusObj.cls}`}>{statusObj.txt}</span></td>
-                                                    <td data-label="Actions">
-                                                        <div style={{ display: 'flex', gap: '0.25rem' }}>
-                                                            <button
-                                                                className="btn btn-ghost btn-sm"
-                                                                style={{ color: 'var(--accent)', padding: '.3rem .6rem' }}
-                                                                onClick={() => startEdit(m)}
-                                                            >
-                                                                <Edit2 size={16} />
-                                                            </button>
-                                                            <button
-                                                                className="btn btn-ghost btn-sm"
-                                                                style={{ color: 'var(--red)', padding: '.3rem .6rem' }}
-                                                                onClick={() => handleDeleteProduct(m.id)}
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
+                                                    </div>
+
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <span className={`status-badge ${statusObj.cls}`} style={{ fontSize: '0.75rem' }}>{statusObj.txt}</span>
                                                         <div style={{ display: 'flex', gap: '4px' }}>
                                                             <button className="btn btn-ghost" onClick={() => startEdit(m)} style={{ padding: '8px', borderRadius: '10px', height: '40px', width: '40px', color: 'var(--accent)', border: '1px solid var(--border)' }}>
                                                                 <Edit2 size={16} />
@@ -1503,30 +1339,9 @@ export default function Inventory() {
                         </div>
                     </div>
                 </div>
-            ) : (
-                <div className="inv-layout-2" style={{ 
-                    display: 'flex',
-                    flexDirection: isMobile ? 'column' : 'row', 
-                    gap: '1.5rem',
-                    marginTop: '0.5cm'
-                }}>
-                    <div className="inv-add-panel" style={{ width: isMobile ? '100%' : '320px', flexShrink: 0 }}>
-                        <div style={{ fontFamily: "'Yeseva One', serif", fontSize: '1.15rem', marginBottom: '1.2rem' }}>
-                            {catForm.id ? '📝 Edit Category' : '＋ Add Category'}
-                        </div>
-                        {CategoryForm()}
-                    </div>
-                    <div className="inv-table-area" style={{ flex: 1 }}>
-                        <div style={{ fontFamily: "'Yeseva One', serif", fontSize: '1.3rem', marginBottom: '1.25rem' }}>
-                            📁 Category Tree
-                        </div>
-                        {CategoryTreeView()}
-                    </div>
-                </div>
-            )}
 
             {/* Mobile FAB */}
-            {isMobile && !showAddModal && activeTab === 'products' && (
+            {isMobile && !showAddModal && (
                 <button 
                     onClick={() => {
                         window.scrollTo(0, 0);
@@ -1554,7 +1369,7 @@ export default function Inventory() {
             )}
 
             {/* Mobile Add Product Modal */}
-            {isMobile && showAddModal && activeTab === 'products' && (
+            {isMobile && showAddModal && (
                 <div className="mobile-modal-overlay" style={{
                     position: 'fixed',
                     inset: 0,
